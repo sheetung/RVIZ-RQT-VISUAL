@@ -2150,6 +2150,8 @@ export default {
 
 
 
+.status-mini-panel,
+
 .chart-mini-panel {
 
   display: none;

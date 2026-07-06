@@ -1,78 +1,72 @@
 <template>
   <div class="connection-status">
-    <el-badge 
-      :type="badgeType" 
+    <el-badge
+      :type="badgeType"
       is-dot
       class="connection-badge"
     >
-      <el-button 
+      <el-button
         :type="buttonType"
         size="small"
-        @click="toggleConnection"
+        @click="toggleDetails"
         :loading="connectionStore.isConnecting"
       >
         <el-icon><Connection /></el-icon>
         {{ connectionStore.connectionStatusText }}
+        <el-icon class="details-arrow" :class="{ open: showDetails }"><ArrowDown /></el-icon>
       </el-button>
     </el-badge>
-    
-    <!-- 连接详情弹窗 -->
-    <el-dialog 
-      v-model="showDetails" 
-      title="连接详情" 
-      width="500px"
-    >
-      <div class="connection-details">
-        <el-descriptions :column="1" border>
-          <el-descriptions-item label="状态">
-            <el-tag :type="tagType">{{ connectionStore.connectionStatusText }}</el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="WebSocket 地址">
-            {{ connectionStore.wsUrl }}
-          </el-descriptions-item>
-          <el-descriptions-item label="已订阅主题">
-            {{ connectionStore.subscribedTopics.length }} 个
-          </el-descriptions-item>
-          <el-descriptions-item label="重连次数">
-            {{ connectionStore.reconnectAttempts || 0 }}
-          </el-descriptions-item>
-        </el-descriptions>
-        
+
+    <transition name="status-popover">
+      <div v-if="showDetails" class="status-popover-panel">
+        <div class="status-popover-header">
+          <div>
+            <div class="status-title">系统状态</div>
+            <div class="status-subtitle">{{ connectionStore.wsUrl }}</div>
+          </div>
+          <el-button size="small" text @click.stop="reconnect">重连</el-button>
+        </div>
+
+        <StatusPanel :compact="true" wide />
+
+        <div class="connection-meta">
+          <span>订阅 {{ connectionStore.subscribedTopics.length }} 个主题</span>
+          <span>重连 {{ connectionStore.reconnectAttempts || 0 }} 次</span>
+        </div>
+
         <div v-if="connectionStore.subscribedTopics.length > 0" class="subscribed-topics">
-          <h4>已订阅主题：</h4>
-          <el-tag 
-            v-for="topic in connectionStore.subscribedTopics" 
+          <el-tag
+            v-for="topic in visibleTopics"
             :key="topic"
             size="small"
             class="topic-tag"
           >
             {{ topic }}
           </el-tag>
+          <span v-if="hiddenTopicCount > 0" class="topic-more">+{{ hiddenTopicCount }}</span>
         </div>
       </div>
-      
-      <template #footer>
-        <el-button @click="showDetails = false">关闭</el-button>
-        <el-button type="primary" @click="showDetails = false">确定</el-button>
-      </template>
-    </el-dialog>
+    </transition>
   </div>
 </template>
 
 <script>
 import { ref, computed } from 'vue'
-import { Connection } from '@element-plus/icons-vue'
+import { Connection, ArrowDown } from '@element-plus/icons-vue'
 import { useConnectionStore } from '../../composables/useConnectionStore'
+import StatusPanel from '../panels/StatusPanel.vue'
 
 export default {
   name: 'ConnectionStatus',
   components: {
-    Connection
+    Connection,
+    ArrowDown,
+    StatusPanel
   },
   setup() {
     const connectionStore = useConnectionStore()
     const showDetails = ref(false)
-    
+
     // 徽章类型
     const badgeType = computed(() => {
       switch (connectionStore.connectionStatus) {
@@ -86,7 +80,7 @@ export default {
           return 'info'
       }
     })
-    
+
     // 按钮类型
     const buttonType = computed(() => {
       switch (connectionStore.connectionStatus) {
@@ -100,37 +94,28 @@ export default {
           return 'default'
       }
     })
-    
-    // 标签类型
-    const tagType = computed(() => {
-      switch (connectionStore.connectionStatus) {
-        case 'connected':
-          return 'success'
-        case 'connecting':
-          return 'warning'
-        case 'error':
-          return 'danger'
-        default:
-          return 'info'
-      }
-    })
-    
-    // 切换连接状态
-    const toggleConnection = () => {
-      if (connectionStore.isConnected) {
-        connectionStore.disconnect()
-      } else {
-        connectionStore.connect()
-      }
+
+    const visibleTopics = computed(() => connectionStore.subscribedTopics.slice(0, 8))
+    const hiddenTopicCount = computed(() => Math.max(0, connectionStore.subscribedTopics.length - visibleTopics.value.length))
+
+    const toggleDetails = () => {
+      showDetails.value = !showDetails.value
     }
-    
+
+    const reconnect = () => {
+      connectionStore.disconnect()
+      connectionStore.connect()
+    }
+
     return {
       connectionStore,
       showDetails,
       badgeType,
       buttonType,
-      tagType,
-      toggleConnection
+      visibleTopics,
+      hiddenTopicCount,
+      toggleDetails,
+      reconnect
     }
   }
 }
@@ -138,6 +123,7 @@ export default {
 
 <style scoped>
 .connection-status {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -147,20 +133,108 @@ export default {
   margin-right: 10px;
 }
 
-.connection-details {
-  margin: 20px 0;
+.details-arrow {
+  margin-left: 4px;
+  transition: transform 0.2s ease;
+}
+
+.details-arrow.open {
+  transform: rotate(180deg);
+}
+
+.status-popover-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(760px, calc(100vw - 28px));
+  padding: 12px;
+  background: #171e25;
+  border: 1px solid #2a3540;
+  border-radius: 6px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  z-index: 3000;
+}
+
+.status-popover-panel::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 28px;
+  width: 10px;
+  height: 10px;
+  background: #171e25;
+  border-left: 1px solid #2a3540;
+  border-top: 1px solid #2a3540;
+  transform: rotate(45deg);
+}
+
+.status-popover-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.status-title {
+  color: #e5edf5;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status-subtitle {
+  max-width: 560px;
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connection-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  color: #94a3b8;
+  font-size: 11px;
 }
 
 .subscribed-topics {
-  margin-top: 20px;
-}
-
-.subscribed-topics h4 {
-  margin-bottom: 10px;
-  color: #333;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
 }
 
 .topic-tag {
+  max-width: 180px;
   margin: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topic-more {
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 24px;
+}
+
+.status-popover-enter-active,
+.status-popover-leave-active {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.status-popover-enter-from,
+.status-popover-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+@media (max-width: 780px) {
+  .status-popover-panel {
+    right: -8px;
+  }
 }
 </style>

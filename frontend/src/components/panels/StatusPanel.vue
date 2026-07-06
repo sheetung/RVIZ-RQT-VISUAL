@@ -1,5 +1,5 @@
 <template>
-  <div class="status-panel">
+  <div class="status-panel" :class="{ 'status-panel--wide': wide }">
     <div class="status-grid">
       <!-- 连接状态 -->
       <div class="status-item connection" :class="connectionStatusClass">
@@ -99,6 +99,27 @@ export default {
     CircleClose,
     Connection
   },
+
+  props: {
+
+    compact: {
+
+      type: Boolean,
+
+      default: false
+
+    },
+
+    wide: {
+
+      type: Boolean,
+
+      default: false
+
+    }
+
+  },
+
   setup() {
     const rosbridge = useRosbridge()
     const connectionStore = useConnectionStore()
@@ -262,6 +283,7 @@ export default {
     
     // 实时运行时间追踪
     let uptimeTimer = null
+    let connectionStatusTimer = null
     const startTime = Date.now()
     
     const startUptimeTracking = () => {
@@ -294,7 +316,7 @@ export default {
       startUptimeTracking()
       
       // 监听连接状态变化
-      setInterval(updateConnectionStatus, 5000)
+      connectionStatusTimer = setInterval(updateConnectionStatus, 5000)
     })
     
     onUnmounted(() => {
@@ -306,6 +328,10 @@ export default {
       
       if (uptimeTimer) {
         clearInterval(uptimeTimer)
+      }
+
+      if (connectionStatusTimer) {
+        clearInterval(connectionStatusTimer)
       }
     })
     
@@ -455,5 +481,70 @@ export default {
   color: #e2e8f0;
   font-size: 9px;
   white-space: nowrap;
+}
+.status-panel--wide {
+  padding: 0;
+  height: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-panel--wide .status-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  flex: none;
+  min-width: 0;
+}
+
+.status-panel--wide .status-item {
+  min-width: 0;
+  padding: 7px 10px;
+}
+
+.status-panel--wide .status-icon {
+  display: flex;
+}
+
+.status-panel--wide .status-label {
+  color: #94a3b8;
+}
+
+.status-panel--wide .status-value {
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.status-panel--wide .indicator-bar {
+  justify-content: flex-end;
+  margin-top: 0;
+  max-width: 360px;
+}
+
+.status-panel--wide .indicator-item {
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+@media (max-width: 1100px) {
+  .status-panel--wide {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .status-panel--wide .status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .status-panel--wide .indicator-bar {
+    justify-content: flex-start;
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .status-panel--wide .status-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
