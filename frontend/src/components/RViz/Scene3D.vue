@@ -66,6 +66,18 @@ export default {
     const rosSubscriptions = new Map()
     const plugins = new Map()
 
+    const amovDefaultTopics = [
+      { topic: '/uav1/prometheus/local_points', type: 'sensor_msgs/msg/PointCloud2' },
+      { topic: '/uav1/prometheus/odom_slam', type: 'nav_msgs/msg/Odometry' },
+      { topic: '/visualization/goal', type: 'visualization_msgs/msg/MarkerArray' },
+      { topic: '/visualization/exp_sfc', type: 'visualization_msgs/msg/MarkerArray' },
+      { topic: '/fsm/path', type: 'nav_msgs/msg/Path' },
+      { topic: '/visualization/exp_traj', type: 'visualization_msgs/msg/MarkerArray' },
+      { topic: '/visualization/backup_traj', type: 'visualization_msgs/msg/MarkerArray' },
+      { topic: '/rog_map/inf_occ', type: 'sensor_msgs/msg/PointCloud2' }
+    ]
+    let amovDefaultsSubscribed = false
+
     // 持久化设置存储
     const persistentSettings = {
       laser: {
@@ -814,22 +826,10 @@ export default {
     // ROS主题订阅方法
     const subscribeToRosTopic = (topicName, messageType) => {
       // console.log(`[Scene3D] 订阅ROS主题: ${topicName}, 类型: ${messageType}`)
-      
-        // 先清理所有相关的订阅和可视化对象（实现真正的单一主题订阅）
-      // console.log(`[Scene3D] 准备订阅新主题: ${topicName}, 当前订阅数: ${rosSubscriptions.size}`)
-
-      // 清理所有旧的订阅和可视化对象
-      if (rosSubscriptions.size > 0) {
-        // console.log(`[Scene3D] 清理所有旧订阅...`)
-        const oldTopics = Array.from(rosSubscriptions.keys())
-        oldTopics.forEach(oldTopicName => {
-          // console.log(`[Scene3D] 取消订阅: ${oldTopicName}`)
-          unsubscribeFromRosTopic(oldTopicName)
-        })
+      if (rosSubscriptions.has(topicName)) {
+        console.log(`[Scene3D] 主题已订阅，跳过重复订阅: ${topicName}`)
+        return true
       }
-
-      // 清理所有可视化对象
-      clearAllVisualizations()
       
       try {
         // 使用rosbridge订阅主题
@@ -926,6 +926,18 @@ export default {
         // 仍然尝试清除可视化对象
         removeVisualization(topicName)
       }
+    }
+
+    const subscribeToAmovDefaultTopics = () => {
+      if (amovDefaultsSubscribed) {
+        return
+      }
+
+      amovDefaultsSubscribed = true
+      amovDefaultTopics.forEach(({ topic, type }) => {
+        subscribeToRosTopic(topic, type)
+      })
+      ElMessage.success('已加载 AMOV RViz 默认显示配置')
     }
 
     // 取消所有订阅
@@ -1289,8 +1301,8 @@ export default {
             : persistentSettings.pointcloud.showIntensity
 
           const material = new THREE.PointsMaterial({
-            size: persistentSettings.pointcloud.pointSize || Math.max(0.02, size / 500),
-            vertexColors: showIntensity,
+            size: persistentSettings.pointcloud.pointSize || Math.max(0.06, size / 300),
+            vertexColors: true,
             sizeAttenuation: true,
             opacity: persistentSettings.pointcloud.opacity || 1.0,
             transparent: (persistentSettings.pointcloud.opacity || 1.0) < 1.0
@@ -2096,6 +2108,7 @@ export default {
       if (rosbridge.isConnected) {
         console.log('[Scene3D] ROS已连接，启动消息验证')
         startMessageVerification()
+        subscribeToAmovDefaultTopics()
       } else {
         console.log('[Scene3D] ROS未连接，等待连接后启动验证')
         // 定期检查连接状态
@@ -2103,6 +2116,7 @@ export default {
           if (rosbridge.isConnected) {
             console.log('[Scene3D] ROS连接成功，启动消息验证')
             startMessageVerification()
+            subscribeToAmovDefaultTopics()
             clearInterval(connectionCheckInterval)
           }
         }, 1000)
@@ -3425,6 +3439,7 @@ export default {
       configurePlugin,
       // ROS集成方法
       subscribeToRosTopic,
+      subscribeToAmovDefaultTopics,
       unsubscribeFromRosTopic,
       updateVisualization,
       removeVisualization,

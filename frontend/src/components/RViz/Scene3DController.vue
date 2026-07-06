@@ -331,14 +331,14 @@ export default {
     const fileInput = ref(null)
     
     // 激光雷达设置
-    const laserType = ref('2d')
+    const laserType = ref('3d')
     const selectedLaser2D = ref('')
-    const selectedPointCloud = ref('')
+    const selectedPointCloud = ref('/uav1/prometheus/local_points')
     const showLaserPoints = ref(true)
     const showLaserLines = ref(true)
     const showIntensity = ref(false)
     const laserPointSize = ref(0.15)  // 2D激光点大小
-    const pointSize = ref(0.05)       // 3D点云大小
+    const pointSize = ref(0.03)       // 3D点云大小
     const pointOpacity = ref(0.8)
     
     // 地图设置
@@ -350,7 +350,7 @@ export default {
     const mapOpacity = ref(0.8)
     
     // 位置信息设置
-    const selectedOdomTopic = ref('/odom')
+    const selectedOdomTopic = ref('/uav1/prometheus/odom_slam')
     const showTrajectory = ref(true)
     const trajectoryLength = ref(100)
 
@@ -410,6 +410,13 @@ export default {
       angular: 0
     })
 
+    const preferTopic = (topics, preferred, currentValue) => {
+      if (preferred && topics.some(topic => topic.name === preferred)) {
+        return preferred
+      }
+      return currentValue || (topics[0] && topics[0].name) || ''
+    }
+
     // 方法定义
     const loadAvailableTopics = async () => {
       try {
@@ -427,18 +434,18 @@ export default {
         })
 
         console.log('加载可用主题:', availableTopics.value)
-        
-        // 自动选择默认主题
-        if (availableLaser2D.value.length > 0 && !selectedLaser2D.value) {
-          selectedLaser2D.value = availableLaser2D.value[0].name
+        // 自动选择 AMOV RViz 默认主题
+        selectedLaser2D.value = preferTopic(availableLaser2D.value, '/scan', selectedLaser2D.value)
+        selectedPointCloud.value = preferTopic(availablePointClouds.value, '/uav1/prometheus/local_points', selectedPointCloud.value)
+        selectedOdomTopic.value = preferTopic(availableOdomTopics.value, '/uav1/prometheus/odom_slam', selectedOdomTopic.value)
+        selectedMapTopic.value = preferTopic(availableMapTopics.value, '', selectedMapTopic.value)
+
+        emit('laser-type-change', laserType.value)
+        if (selectedPointCloud.value) {
+          emit('pointcloud-change', selectedPointCloud.value)
         }
-        
-        if (availablePointClouds.value.length > 0 && !selectedPointCloud.value) {
-          selectedPointCloud.value = availablePointClouds.value[0].name
-        }
-        
-        if (availableMapTopics.value.length > 0 && !selectedMapTopic.value) {
-          selectedMapTopic.value = availableMapTopics.value[0].name
+        if (selectedOdomTopic.value) {
+          emit('odom-topic-change', selectedOdomTopic.value)
         }
 
       } catch (error) {

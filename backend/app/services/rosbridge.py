@@ -450,42 +450,41 @@ class RosbridgeService:
                 except Exception as e:
                     logger.warning(f"Could not get publisher QoS info for {topic} on retry: {e}")
             
-            # 分析发布者的实际QoS并尝试完全匹配
+            # 分析发布者的实际QoS并尽量兼容。传感器数据常用 BEST_EFFORT；
+            # 如果订阅端使用 RELIABLE，会和 BEST_EFFORT 发布者不兼容，导致收不到点云。
             logger.info(f"🔧 Analyzing publisher QoS for {topic}")
+
+            sensor_like_types = {
+                'sensor_msgs/msg/PointCloud2',
+                'sensor_msgs/PointCloud2',
+                'sensor_msgs/msg/LaserScan',
+                'sensor_msgs/LaserScan',
+                'sensor_msgs/msg/Image',
+                'sensor_msgs/Image',
+            }
+
+            reliability = QoSReliabilityPolicy.BEST_EFFORT if msg_type in sensor_like_types else QoSReliabilityPolicy.RELIABLE
+            history = QoSHistoryPolicy.KEEP_LAST
+            depth = 10
 
             if publisher_qos_profiles:
                 first_pub_qos = publisher_qos_profiles[0]
                 logger.info(f"📊 Raw publisher QoS: reliability={first_pub_qos.reliability}, durability={first_pub_qos.durability}, history={first_pub_qos.history}, depth={first_pub_qos.depth}")
 
-                # 尝试与rosbag2_player的特殊QoS兼容
-                # history=3可能是rosbag2特有的，我们尝试KEEP_ALL
-                if first_pub_qos.history == 3:
-                    logger.info(f"🔍 Detected rosbag2 history=3, trying KEEP_ALL to match")
-                    qos_profile = QoSProfile(
-                        reliability=QoSReliabilityPolicy.RELIABLE,
-                        durability=QoSDurabilityPolicy.VOLATILE,
-                        history=QoSHistoryPolicy.KEEP_ALL,  # 尝试KEEP_ALL匹配history=3
-                        depth=1000  # 大缓冲区用于KEEP_ALL
-                    )
-                    logger.info(f"🎯 Using KEEP_ALL history for rosbag2 compatibility")
-                else:
-                    # 标准配置
-                    qos_profile = QoSProfile(
-                        reliability=QoSReliabilityPolicy.RELIABLE,
-                        durability=QoSDurabilityPolicy.VOLATILE,
-                        history=QoSHistoryPolicy.KEEP_LAST,
-                        depth=10
-                    )
-                    logger.info(f"🎯 Using standard KEEP_LAST history")
-            else:
-                # 没有发布者信息，使用标准配置
-                qos_profile = QoSProfile(
-                    reliability=QoSReliabilityPolicy.RELIABLE,
-                    durability=QoSDurabilityPolicy.VOLATILE,
-                    history=QoSHistoryPolicy.KEEP_LAST,
-                    depth=10
-                )
-                logger.info(f"🎯 No publisher info, using standard QoS")
+                if first_pub_qos.reliability == QoSReliabilityPolicy.BEST_EFFORT:
+                    reliability = QoSReliabilityPolicy.BEST_EFFORT
+
+                if first_pub_qos.history == QoSHistoryPolicy.KEEP_ALL:
+                    history = QoSHistoryPolicy.KEEP_ALL
+                    depth = 1000
+
+            qos_profile = QoSProfile(
+                reliability=reliability,
+                durability=QoSDurabilityPolicy.VOLATILE,
+                history=history,
+                depth=depth
+            )
+            logger.info(f"🎯 Using compatible QoS for {topic}")
 
             logger.info(f"✨ Final QoS for {topic}: reliability={qos_profile.reliability.name}, durability={qos_profile.durability.name}, history={qos_profile.history.name}, depth={qos_profile.depth}")
                 
@@ -506,7 +505,7 @@ class RosbridgeService:
 
                 self.subscribers[topic] = subscriber
                 logger.info(f"✅ Successfully created subscriber for {topic}")
-                logger.info(f"🎯 QoS: RELIABLE + VOLATILE + KEEP_LAST + depth=10")
+                logger.info(f"🎯 QoS: {reliability_name} + {durability_name} + {history_name} + depth={qos_profile.depth}")
 
             except Exception as e:
                 logger.error(f"❌ Failed to create subscriber for {topic}: {e}")

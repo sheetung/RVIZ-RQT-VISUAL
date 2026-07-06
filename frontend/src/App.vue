@@ -5,7 +5,7 @@
       <div class="header-left">
         <div class="app-logo">
           <div class="logo-icon"></div>
-          <h1 class="app-title">ROS2 Web 可视化系统</h1>
+          <h1 class="app-title">AMOV 3D 可视化</h1>
         </div>
       </div>
       <div class="header-right">
@@ -57,18 +57,18 @@ export default {
 
 html, body {
   font-family: 'Segoe UI', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #0a0e27;
+  background: #101418;
   color: #ffffff;
   overflow: auto;
 }
 
 #app {
   height: 100vh;
-  background: linear-gradient(135deg, #0a0e27 0%, #1e1e3f 50%, #2a2a5a 100%);
+  background: #101418;
   position: relative;
 }
 
-/* 科技感背景效果 */
+/* 背景保持安静，突出 3D 场景 */
 #app::before {
   content: '';
   position: absolute;
@@ -85,17 +85,17 @@ html, body {
 }
 
 .app-header {
-  height: 50px;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  height: 46px;
+  background: #151b22;
+  backdrop-filter: none;
+  border-bottom: 1px solid #28313a;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
   position: relative;
   z-index: 100;
-  box-shadow: 0 1px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: none;
 }
 
 .header-left {
@@ -158,7 +158,7 @@ html, body {
 }
 
 .app-content {
-  height: calc(100vh - 50px);
+  height: calc(100vh - 46px);
   position: relative;
   z-index: 2;
   overflow: auto;

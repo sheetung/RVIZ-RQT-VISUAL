@@ -3,7 +3,7 @@
     <!-- 顶部工具栏 -->
     <div class="top-toolbar">
       <div class="toolbar-left">
-        <el-text size="large" class="app-title">ROS2 实时可视化系统</el-text>
+        <el-text size="large" class="app-title">AMOV 3D 可视化</el-text>
       </div>
 
       <div class="toolbar-center">
@@ -45,7 +45,7 @@
         <div class="scene-section" :style="{ width: `${sceneWidth}%` }">
           <div class="scene-panel">
             <div class="scene-header">
-              <h3>3D 可视化</h3>
+              <h3>AMOV 点云视图</h3>
               <div class="scene-controls">
                 <el-button-group size="small">
                   <el-button @click="resetView">重置视角</el-button>
@@ -364,7 +364,7 @@ export default {
     const isDragMode = ref(false)
 
     // 传统布局控制状态
-    const sceneWidth = ref(50) // 3D场景和拓扑图各占50%宽度
+    const sceneWidth = ref(74) // AMOV 默认以 3D 场景为主
     const isResizing = ref(false)
     const startX = ref(0)
     const startWidth = ref(0)
@@ -407,31 +407,17 @@ export default {
         dragOrder: 0
       },
       {
-        id: 'topology',
-        title: 'ROS 通信拓扑图',
-        x: 840,
-        y: 20,
-        width: 500,
-        height: 400,
-        minimized: false,
-        fullscreen: false,
-        zoomLevel: 1.0,
-        originalWidth: 500,
-        originalHeight: 400,
-        dragOrder: 0
-      },
-      {
         id: 'gps',
-        title: 'GPS 位置信息',
-        x: 840,
-        y: 440,
-        width: 240,
-        height: 180,
+        title: '位置信息',
+        x: 860,
+        y: 20,
+        width: 300,
+        height: 220,
         minimized: false,
         fullscreen: false,
         zoomLevel: 1.0,
-        originalWidth: 240,
-        originalHeight: 180,
+        originalWidth: 300,
+        originalHeight: 220,
         dragOrder: 0
       },
       {
@@ -783,7 +769,7 @@ export default {
       const containerHeight = dragContainer.value?.clientHeight || 800
 
       // 按重要性排序（3D场景和拓扑图优先）
-      const priorityOrder = ['scene', 'topology', 'controller', 'gps', 'status', 'chart']
+      const priorityOrder = ['scene', 'controller', 'gps', 'status', 'chart']
       const sortedPanels = [...dragPanels.value].sort((a, b) => {
         return priorityOrder.indexOf(a.id) - priorityOrder.indexOf(b.id)
       })
@@ -797,9 +783,6 @@ export default {
         if (panel.id === 'scene') {
           panel.width = 600
           panel.height = 400
-        } else if (panel.id === 'topology') {
-          panel.width = 400
-          panel.height = 300
         } else {
           panel.width = 200
           panel.height = 150
@@ -1886,4 +1869,330 @@ export default {
   background: rgba(255, 59, 48, 0.2) !important;
   border-color: rgba(255, 59, 48, 0.5) !important;
 }
+
+
+
+/* AMOV monitoring layout override */
+
+.main-layout {
+
+  background: #101418;
+
+}
+
+
+
+.top-toolbar {
+
+  height: 44px;
+
+  background: #151b22;
+
+  border-bottom: 1px solid #28313a;
+
+  box-shadow: none;
+
+  padding: 0 14px;
+
+}
+
+
+
+.app-title {
+
+  background: none;
+
+  -webkit-text-fill-color: #e5edf5;
+
+  color: #e5edf5;
+
+  letter-spacing: 0;
+
+}
+
+
+
+.main-content:not(.drag-mode) {
+
+  display: grid;
+
+  grid-template-columns: minmax(0, 1fr) 340px;
+
+  gap: 12px;
+
+  padding: 12px;
+
+  min-height: calc(100vh - 44px);
+
+  background: #101418;
+
+}
+
+
+
+.scene-section {
+
+  width: auto !important;
+
+  min-width: 0;
+
+  padding: 0;
+
+}
+
+
+
+.scene-panel,
+
+.mini-panel {
+
+  background: #171e25;
+
+  border: 1px solid #2a3540;
+
+  border-radius: 6px;
+
+  box-shadow: none;
+
+  backdrop-filter: none;
+
+}
+
+
+
+.scene-panel::before,
+
+.mini-panel::before,
+
+.topology-main-panel::before {
+
+  display: none;
+
+}
+
+
+
+.scene-header,
+
+.mini-panel-header {
+
+  background: #1c242d;
+
+  border-bottom: 1px solid #2a3540;
+
+  color: #dbe7f3;
+
+  backdrop-filter: none;
+
+}
+
+
+
+.scene-header {
+
+  height: 36px;
+
+  padding: 0 12px;
+
+}
+
+
+
+.scene-header h3 {
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+}
+
+
+
+.scene-content {
+
+  height: calc(100% - 36px);
+
+  min-height: calc(100vh - 104px);
+
+}
+
+
+
+.resize-handle,
+
+.topology-main-panel {
+
+  display: none !important;
+
+}
+
+
+
+.topology-section {
+
+  width: auto !important;
+
+  min-width: 0;
+
+  padding: 0;
+
+  min-height: 0;
+
+  overflow: hidden;
+
+}
+
+
+
+.control-panels-area {
+
+  height: 100%;
+
+  min-height: 0;
+
+  max-height: none;
+
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+}
+
+
+
+.control-panels-container {
+
+  display: grid;
+
+  grid-template-columns: 1fr;
+
+  gap: 10px;
+
+  min-width: 0;
+
+  height: auto;
+
+  padding: 0;
+
+}
+
+
+
+.mini-panel {
+
+  min-width: 0;
+
+  min-height: 0;
+
+  transform: none !important;
+
+}
+
+
+
+.mini-panel:hover {
+
+  transform: none !important;
+
+  border-color: #3b4a57;
+
+  box-shadow: none;
+
+}
+
+
+
+.mini-panel-header {
+
+  height: 30px;
+
+  padding: 0 10px;
+
+}
+
+
+
+.mini-panel-header h5 {
+
+  color: #dbe7f3;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+}
+
+
+
+.mini-panel-content {
+
+  height: auto;
+
+  max-height: 280px;
+
+  overflow: auto;
+
+  padding: 8px;
+
+}
+
+
+
+.gps-mini-panel,
+
+.controller-mini-panel,
+
+.status-mini-panel {
+
+  min-width: 0;
+
+}
+
+
+
+.chart-mini-panel {
+
+  display: none;
+
+}
+
+
+
+.toolbar-center {
+
+  justify-content: flex-start;
+
+  padding-left: 16px;
+
+}
+
+
+
+@media (max-width: 1100px) {
+
+  .main-content:not(.drag-mode) {
+
+    grid-template-columns: 1fr;
+
+  }
+
+
+
+  .topology-section {
+
+    overflow: visible;
+
+  }
+
+
+
+  .scene-content {
+
+    min-height: 60vh;
+
+  }
+
+}
+
+
 </style>

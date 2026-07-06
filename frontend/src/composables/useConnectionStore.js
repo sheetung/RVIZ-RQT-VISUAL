@@ -13,8 +13,18 @@ export const useConnectionStore = defineStore('connection', () => {
   const connectionError = ref(null)
   const websocket = ref(null)
   
-  // 连接配置 - 修正为正确的 WebSocket 地址
-  const wsUrl = ref('ws://localhost:8000/ws')  // 后端 FastAPI WebSocket 端点
+  const getDefaultWsUrl = () => {
+    if (typeof window === 'undefined') {
+      return 'ws://localhost:8000/ws'
+    }
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const host = window.location.hostname || 'localhost'
+    return `${protocol}//${host}:8000/ws`
+  }
+
+  // 连接配置 - 跟随当前页面主机，避免局域网访问时连到浏览器本机 localhost
+  const wsUrl = ref(getDefaultWsUrl())  // 后端 FastAPI WebSocket 端点
   const reconnectAttempts = ref(0)
   const maxReconnectAttempts = ref(5)
   const reconnectInterval = ref(3000)

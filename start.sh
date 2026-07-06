@@ -37,14 +37,21 @@ start_local() {
     
     if [ ! -d "venv" ]; then
         echo "📦 创建虚拟环境..."
-        python3 -m venv venv
+        python3 -m venv --system-site-packages venv
     fi
     
+    if [ -f /opt/ros/humble/setup.bash ]; then
+        source /opt/ros/humble/setup.bash
+    fi
+    if [ -f /home/amov/super_ros2_ws/install/setup.bash ]; then
+        source /home/amov/super_ros2_ws/install/setup.bash
+    fi
+
     source venv/bin/activate
     pip install -r requirements.txt
-    
+
     echo "🚀 启动 FastAPI 服务 (端口 8000)..."
-    python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
+    ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0} python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
     BACKEND_PID=$!
     
     cd ..
@@ -59,14 +66,14 @@ start_local() {
     fi
     
     echo "🚀 启动 Vue.js 开发服务器 (端口 3000)..."
-    npm run dev &
+    npm run dev -- --host 0.0.0.0 --port 3000 &
     FRONTEND_PID=$!
     
     cd ..
     
     echo ""
     echo "✅ 系统启动完成！"
-    echo "🌐 前端地址: http://localhost:3000"
+    echo "🌐 前端地址: http://0.0.0.0:3000 (局域网访问 http://192.168.1.66:3000)"
     echo "🔧 后端 API: http://localhost:8000"
     echo "📚 API 文档: http://localhost:8000/docs"
     echo ""
