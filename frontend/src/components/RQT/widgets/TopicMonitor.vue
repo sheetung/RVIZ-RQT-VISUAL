@@ -135,6 +135,7 @@ import {
   CircleCloseFilled 
 } from '@element-plus/icons-vue'
 import { useConnectionStore } from '../../../composables/useConnectionStore'
+import { ROS_TOPICS } from '../../../config/rosTopics'
 
 export default {
   name: 'TopicMonitor',
@@ -155,7 +156,7 @@ export default {
     // 主题列表数据
     const topics = ref([
       {
-        name: '/scan',
+        name: ROS_TOPICS.laserScan,
         messageType: 'sensor_msgs/msg/LaserScan',
         frequency: 10.2,
         publishers: 1,
@@ -171,7 +172,7 @@ export default {
         }
       },
       {
-        name: '/cloud',
+        name: ROS_TOPICS.pointCloud,
         messageType: 'sensor_msgs/msg/PointCloud2',
         frequency: 5.1,
         publishers: 1,
@@ -202,7 +203,7 @@ export default {
         }
       },
       {
-        name: '/cmd_vel',
+        name: ROS_TOPICS.cmdVel,
         messageType: 'geometry_msgs/msg/Twist',
         frequency: 0,
         publishers: 0,
@@ -215,7 +216,7 @@ export default {
         }
       },
       {
-        name: '/odom',
+        name: ROS_TOPICS.odom,
         messageType: 'nav_msgs/msg/Odometry',
         frequency: 50.0,
         publishers: 1,

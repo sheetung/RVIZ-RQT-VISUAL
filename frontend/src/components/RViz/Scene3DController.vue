@@ -268,42 +268,12 @@
         </div>
       </div>
     </div>
-
-    <!-- 全局控制 -->
-    <div class="control-section">
-      <h4>场景控制</h4>
-      <div class="global-controls">
-        <div class="control-buttons">
-          <el-button @click="resetCamera" size="small">
-            <el-icon><Refresh /></el-icon>
-            重置相机
-          </el-button>
-          <el-button @click="toggleGrid" size="small">
-            <el-icon><Grid /></el-icon>
-            {{ showGrid ? '隐藏' : '显示' }}网格
-          </el-button>
-          <el-button @click="toggleAxes" size="small">
-            <el-icon><Coordinate /></el-icon>
-            {{ showAxes ? '隐藏' : '显示' }}坐标轴
-          </el-button>
-        </div>
-        
-        <div class="view-presets">
-          <label>视角预设:</label>
-          <el-button-group size="small">
-            <el-button @click="setViewPreset('top')">俯视图</el-button>
-            <el-button @click="setViewPreset('side')">侧视图</el-button>
-            <el-button @click="setViewPreset('iso')">等距图</el-button>
-          </el-button-group>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { Refresh, Aim, Folder, Grid, Coordinate, Location, Close } from '@element-plus/icons-vue'
+import { Refresh, Aim, Folder, Location, Close } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useRosbridge } from '../../composables/useRosbridge'
 import { ROS_TOPICS } from '../../config/rosTopics'
@@ -311,7 +281,7 @@ import { ROS_TOPICS } from '../../config/rosTopics'
 export default {
   name: 'Scene3DController',
   components: {
-    Refresh, Aim, Folder, Grid, Coordinate, Location, Close
+    Refresh, Aim, Folder, Location, Close
   },
   emits: [
     'laser-type-change',
@@ -616,26 +586,6 @@ export default {
     }
 
     // 场景控制
-    const resetCamera = () => {
-      emit('camera-reset')
-    }
-
-    const toggleGrid = () => {
-      showGrid.value = !showGrid.value
-      emit('settings-update', {
-        type: 'scene',
-        showGrid: showGrid.value
-      })
-    }
-
-    const toggleAxes = () => {
-      showAxes.value = !showAxes.value
-      emit('settings-update', {
-        type: 'scene',
-        showAxes: showAxes.value
-      })
-    }
-
     const resetMapView = () => {
       emit('settings-update', { type: 'map', action: 'reset' })
     }
@@ -644,11 +594,6 @@ export default {
       emit('settings-update', { type: 'map', action: 'center' })
     }
 
-    const setViewPreset = (preset) => {
-      emit('view-preset', preset)
-    }
-
-    // 监听器
     watch(() => selectedOdomTopic.value, (newTopic) => {
       if (newTopic) {
         onOdomTopicChange(newTopic)
@@ -717,12 +662,8 @@ export default {
       updatePositionSettings,
       updateTrajectorySettings,
       setNavigationTool,
-      resetCamera,
-      toggleGrid,
-      toggleAxes,
       resetMapView,
       centerOnMap,
-      setViewPreset
     }
   }
 }
@@ -737,22 +678,7 @@ export default {
   border-radius: 8px;
 }
 
-.control-section {
-  margin-bottom: 24px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-}
 
-.control-section h4 {
-  margin: 0 0 16px 0;
-  color: #e2e8f0;
-  font-size: 14px;
-  font-weight: 600;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-  padding-bottom: 8px;
-}
 
 .control-item {
   margin-bottom: 16px;
@@ -802,16 +728,7 @@ export default {
   margin-top: 12px;
 }
 
-.view-presets {
-  margin-top: 16px;
-}
 
-.view-presets label {
-  display: block;
-  margin-bottom: 8px;
-  color: #cbd5e1;
-  font-size: 12px;
-}
 
 .tool-hint {
   margin-top: 8px;

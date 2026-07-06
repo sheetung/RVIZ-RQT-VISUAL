@@ -87,6 +87,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { useConnectionStore } from '../../composables/useConnectionStore'
+import { ROS_TOPICS } from '../../config/rosTopics'
 import { useRosbridge } from '../../composables/useRosbridge'
 
 export default {
@@ -169,36 +170,36 @@ export default {
         // 暂时使用模拟数据
         topics.value = [
           {
-            name: '/scan',
+            name: ROS_TOPICS.laserScan,
             message_type: 'sensor_msgs/msg/LaserScan',
             publishers: ['laser_node'],
             subscribers: []
           },
           {
-            name: '/camera/image_raw',
-            message_type: 'sensor_msgs/msg/Image',
-            publishers: ['camera_node'],
-            subscribers: []
-          },
-          {
-            name: '/cmd_vel',
+            name: ROS_TOPICS.cmdVel,
             message_type: 'geometry_msgs/msg/Twist',
             publishers: [],
             subscribers: ['robot_controller']
           },
           {
-            name: '/point_cloud',
+            name: ROS_TOPICS.pointCloud,
             message_type: 'sensor_msgs/msg/PointCloud2',
             publishers: ['lidar_node'],
             subscribers: []
           },
           {
-            name: '/visualization_marker',
-            message_type: 'visualization_msgs/msg/Marker',
+            name: ROS_TOPICS.goalMarker,
+            message_type: 'visualization_msgs/msg/MarkerArray',
             publishers: ['marker_publisher'],
             subscribers: []
+          },
+          {
+            name: ROS_TOPICS.odom,
+            message_type: 'nav_msgs/msg/Odometry',
+            publishers: ['odom_node'],
+            subscribers: []
           }
-        ]
+        ].filter(topic => topic.name)
       } catch (error) {
         console.error('Failed to fetch topics:', error)
         ElMessage.error('获取主题列表失败')

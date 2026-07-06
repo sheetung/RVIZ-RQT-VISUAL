@@ -1,24 +1,24 @@
 const env = import.meta.env || {}
 
-const topic = (key, fallback) => {
+const topic = (key) => {
   const value = env[key]
-  return typeof value === 'string' && value.trim() ? value.trim() : fallback
+  return typeof value === 'string' ? value.trim() : ''
 }
 
 export const ROS_TOPICS = {
-  laserScan: topic('VITE_ROS_LASER_SCAN_TOPIC', '/scan'),
-  pointCloud: topic('VITE_ROS_POINTCLOUD_TOPIC', '/points'),
-  inflatedMap: topic('VITE_ROS_INFLATED_MAP_TOPIC', '/inflated_map'),
-  odom: topic('VITE_ROS_ODOM_TOPIC', '/odom'),
-  pose: topic('VITE_ROS_POSE_TOPIC', '/pose'),
-  expectedControl: topic('VITE_ROS_EXPECTED_CONTROL_TOPIC', '/goal_pose'),
-  initialPose: topic('VITE_ROS_INITIAL_POSE_TOPIC', '/initialpose'),
-  goalMarker: topic('VITE_ROS_GOAL_MARKER_TOPIC', '/visualization/goal'),
-  expSfc: topic('VITE_ROS_EXP_SFC_TOPIC', '/visualization/exp_sfc'),
-  path: topic('VITE_ROS_PATH_TOPIC', '/fsm/path'),
-  expTraj: topic('VITE_ROS_EXP_TRAJ_TOPIC', '/visualization/exp_traj'),
-  backupTraj: topic('VITE_ROS_BACKUP_TRAJ_TOPIC', '/visualization/backup_traj'),
-  cmdVel: topic('VITE_ROS_CMD_VEL_TOPIC', '/cmd_vel')
+  laserScan: topic('VITE_ROS_LASER_SCAN_TOPIC'),
+  pointCloud: topic('VITE_ROS_POINTCLOUD_TOPIC'),
+  inflatedMap: topic('VITE_ROS_INFLATED_MAP_TOPIC'),
+  odom: topic('VITE_ROS_ODOM_TOPIC'),
+  pose: topic('VITE_ROS_POSE_TOPIC'),
+  expectedControl: topic('VITE_ROS_EXPECTED_CONTROL_TOPIC'),
+  initialPose: topic('VITE_ROS_INITIAL_POSE_TOPIC'),
+  goalMarker: topic('VITE_ROS_GOAL_MARKER_TOPIC'),
+  expSfc: topic('VITE_ROS_EXP_SFC_TOPIC'),
+  path: topic('VITE_ROS_PATH_TOPIC'),
+  expTraj: topic('VITE_ROS_EXP_TRAJ_TOPIC'),
+  backupTraj: topic('VITE_ROS_BACKUP_TRAJ_TOPIC'),
+  cmdVel: topic('VITE_ROS_CMD_VEL_TOPIC')
 }
 
 export const getDefaultVisualizationTopics = () => [
@@ -33,6 +33,5 @@ export const getDefaultVisualizationTopics = () => [
 ].filter(item => item.topic)
 
 export const getPositionTopics = () => [
-  { topic: ROS_TOPICS.odom, type: 'nav_msgs/msg/Odometry' },
-  { topic: ROS_TOPICS.pose, type: 'geometry_msgs/msg/PoseStamped' }
-].filter((item, index, items) => item.topic && items.findIndex(other => other.topic === item.topic) === index)
+  { topic: ROS_TOPICS.odom, type: 'nav_msgs/msg/Odometry' }
+].filter(item => item.topic)

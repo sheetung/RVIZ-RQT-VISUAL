@@ -251,8 +251,8 @@ export default {
           icon: '🤖',
           active: true,
           selected: false,
-          publishedTopics: ['/cmd_vel', '/odom'],
-          subscribedTopics: ['/scan', '/camera/image'],
+          publishedTopics: [ROS_TOPICS.cmdVel, ROS_TOPICS.odom].filter(Boolean),
+          subscribedTopics: [ROS_TOPICS.laserScan].filter(Boolean),
           services: ['/start_navigation', '/stop_robot']
         },
         {
@@ -267,7 +267,7 @@ export default {
           icon: '📡',
           active: true,
           selected: false,
-          publishedTopics: ['/scan'],
+          publishedTopics: [ROS_TOPICS.laserScan].filter(Boolean),
           subscribedTopics: [],
           services: ['/laser_config']
         },
@@ -283,9 +283,9 @@ export default {
           icon: '📷',
           active: true,
           selected: false,
-          publishedTopics: ['/camera/image', '/camera/info'],
+          publishedTopics: [],
           subscribedTopics: [],
-          services: ['/camera_config']
+          services: []
         },
         {
           id: 'navigation',
@@ -299,8 +299,8 @@ export default {
           icon: '🗺️',
           active: true,
           selected: false,
-          publishedTopics: ['/path', '/goal_status'],
-          subscribedTopics: ['/scan', '/odom', '/goal'],
+          publishedTopics: [ROS_TOPICS.path].filter(Boolean),
+          subscribedTopics: [ROS_TOPICS.laserScan, ROS_TOPICS.odom, ROS_TOPICS.expectedControl].filter(Boolean),
           services: ['/make_plan', '/clear_costmaps']
         }
       ]
@@ -310,7 +310,7 @@ export default {
         const topicNodes = [
           {
             id: 'scan_topic',
-            name: '/scan',
+            name: ROS_TOPICS.laserScan,
             type: '主题',
             x: 100,
             y: 150,
@@ -322,7 +322,7 @@ export default {
           },
           {
             id: 'cmd_vel_topic',
-            name: '/cmd_vel',
+            name: ROS_TOPICS.cmdVel,
             type: '主题',
             x: 200,
             y: 150,

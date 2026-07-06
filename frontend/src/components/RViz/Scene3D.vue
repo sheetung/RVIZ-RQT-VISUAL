@@ -19,7 +19,7 @@
     <!-- 调试快捷键提示 -->
     <div class="debug-hint" v-show="!loading">
       <div class="hint-content">
-        <small>快捷键: D-调试 | R-重置 | F-适配点云 | G-网格 | M-适配地图 | C-检查订阅 | X-清除全部 | Z-取消订阅</small>
+        <small>快捷键: D-调试 | R-重置 | F-适配点云 | G-网格 | M-适配地图 | C-检查订阅 | X-清除全部</small>
       </div>
     </div>
   </div>
@@ -669,10 +669,12 @@ export default {
      * 键盘事件处理（调试用）
      */
     const onKeyDown = (event) => {
-      // 只在Scene3D容器获得焦点时处理
-      if (document.activeElement === containerRef.value || 
-          containerRef.value?.contains(document.activeElement)) {
-        
+      const isNavigationActive = currentNavigationTool !== 'none'
+      const isSceneFocused = document.activeElement === containerRef.value ||
+          containerRef.value?.contains(document.activeElement)
+
+      // ???????????????????????????
+      if (isNavigationActive || isSceneFocused) {
         switch (event.key.toLowerCase()) {
           case 'd':
             // D键：显示调试信息
@@ -715,12 +717,13 @@ export default {
             checkSubscriptionStatus()
             break
           case 'x':
-            // X键：清除所有可视化对象
-            clearAllVisualizations()
-            break
-          case 'z':
-            // Z键：取消所有订阅
-            unsubscribeAllTopics()
+            if (currentNavigationTool !== 'none') {
+              event.preventDefault()
+              event.stopPropagation()
+              cancelNavigationSelection()
+            } else {
+              clearAllVisualizations()
+            }
             break
         }
       }
@@ -1312,9 +1315,8 @@ export default {
           visualizationObjects.set(topic, pointCloud)
           
           // 只在首次或特殊情况下调整相机视角，避免频繁变化
-          if (pointCloudUpdateCount <= 3) {
-            fitCameraToPointCloud(pointCloud)
-          }
+          // Keep the startup camera at the configured default view.
+          // Users can still press F to fit the point cloud explicitly.
           
           if (shouldLog) {
             console.log(`✅ Added point cloud with ${pointsProcessed} points`)
@@ -2197,13 +2199,22 @@ export default {
     // 导航工具相关方法
     const setNavigationTool = (tool) => {
       currentNavigationTool = tool
-      console.log('设置导航工具:', tool)
+      console.log('set navigation tool:', tool)
 
-      // 清除之前的预览箭头
       clearPreviewArrow()
+      isDragging = false
+      dragStartPosition = null
+      dragCurrentPosition = null
 
-      // 更改鼠标样式
+      if (controls) {
+        controls.enabled = tool === 'none'
+      }
+
       if (containerRef.value) {
+        if (tool !== 'none') {
+          containerRef.value.focus()
+        }
+
         switch (tool) {
           case '2d_goal':
             containerRef.value.style.cursor = 'crosshair'
@@ -2217,45 +2228,70 @@ export default {
       }
     }
 
+    const cancelNavigationSelection = () => {
+      clearPreviewArrow()
+      isDragging = false
+      dragStartPosition = null
+      dragCurrentPosition = null
+      setNavigationTool('none')
+      ElMessage.info('已取消本次目标点')
+    }
+
+    const getPreviewArrowLength = (direction) => {
+      return Math.max(0.8, Math.min(direction.length(), 3.0))
+    }
+
+    const layoutPreviewArrow = (position, direction) => {
+      if (!previewArrow) return
+
+      const length = getPreviewArrowLength(direction)
+      const shaftLength = Math.max(0.35, length - 0.28)
+      const angle = Math.atan2(direction.y, direction.x)
+      const shaft = previewArrow.userData.shaft
+      const arrowHead = previewArrow.userData.arrowHead
+
+      previewArrow.position.copy(position)
+      previewArrow.rotation.z = angle
+
+      if (shaft) {
+        shaft.scale.y = shaftLength
+        shaft.position.set(shaftLength / 2, 0, 0.04)
+      }
+
+      if (arrowHead) {
+        arrowHead.position.set(shaftLength + 0.2, 0, 0.04)
+      }
+    }
+
     const createPreviewArrow = (position, direction) => {
-      // 清除之前的箭头
       clearPreviewArrow()
 
-      // 创建箭头几何体
-      const arrowGeometry = new THREE.ConeGeometry(0.1, 0.3, 8)
       const arrowMaterial = new THREE.MeshBasicMaterial({
         color: currentNavigationTool === '2d_goal' ? 0xff6b35 : 0x4dabf7,
         transparent: true,
-        opacity: 0.8
+        opacity: 0.85,
+        depthTest: false
       })
 
-      const arrowHead = new THREE.Mesh(arrowGeometry, arrowMaterial)
-
-      // 创建箭头杆
-      const shaftGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.4, 8)
+      const shaftGeometry = new THREE.CylinderGeometry(0.035, 0.035, 1, 12)
       const shaft = new THREE.Mesh(shaftGeometry, arrowMaterial)
+      shaft.rotation.z = -Math.PI / 2
 
-      // 组合箭头
+      const arrowGeometry = new THREE.ConeGeometry(0.14, 0.36, 12)
+      const arrowHead = new THREE.Mesh(arrowGeometry, arrowMaterial)
+      arrowHead.rotation.z = -Math.PI / 2
+
       previewArrow = new THREE.Group()
-      shaft.position.set(0, -0.2, 0)
-      arrowHead.position.set(0, 0, 0)
+      previewArrow.userData = { shaft, arrowHead }
       previewArrow.add(shaft)
       previewArrow.add(arrowHead)
-
-      // 设置位置和方向
-      previewArrow.position.copy(position)
-      const angle = Math.atan2(direction.y, direction.x)
-      previewArrow.rotation.z = angle - Math.PI / 2 // 调整箭头指向
-
       scene.add(previewArrow)
+
+      layoutPreviewArrow(position, direction)
     }
 
     const updatePreviewArrow = (position, direction) => {
-      if (previewArrow) {
-        previewArrow.position.copy(position)
-        const angle = Math.atan2(direction.y, direction.x)
-        previewArrow.rotation.z = angle - Math.PI / 2
-      }
+      layoutPreviewArrow(position, direction)
     }
 
     const clearPreviewArrow = () => {

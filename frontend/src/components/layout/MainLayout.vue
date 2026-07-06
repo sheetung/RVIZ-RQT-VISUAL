@@ -11,9 +11,34 @@
               <div class="scene-controls">
                 <el-button-group size="small">
                   <el-button @click="resetView">重置视角</el-button>
-                  <el-button @click="toggleGrid">网格</el-button>
-                  <el-button @click="toggleAxes">坐标轴</el-button>
+                  <el-button @click="toggleGrid" :type="sceneShowGrid ? 'primary' : 'default'">网格</el-button>
+                  <el-button @click="toggleAxes" :type="sceneShowAxes ? 'primary' : 'default'">坐标轴</el-button>
                 </el-button-group>
+                <el-dropdown trigger="click" @command="setSceneViewPreset">
+                  <el-button size="small">
+                    视角预设
+                    <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="top">俯视图</el-dropdown-item>
+                      <el-dropdown-item command="side">侧视图</el-dropdown-item>
+                      <el-dropdown-item command="iso">等距图</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+                <el-dropdown trigger="click" @command="setExpectedTargetTool">
+                  <el-button size="small" type="primary">
+                    期望目标
+                    <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="2d_goal">2D期望</el-dropdown-item>
+                      <el-dropdown-item command="3d_goal" disabled>3D期望</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
               </div>
             </div>
             <div class="scene-content">
@@ -284,7 +309,8 @@ import {
   Plus,
   ZoomIn,
   ZoomOut,
-  CloseBold
+  CloseBold,
+  ArrowDown
 } from '@element-plus/icons-vue'
 
 // 引入面板组件
@@ -310,6 +336,7 @@ export default {
     ZoomIn,
     ZoomOut,
     CloseBold,
+    ArrowDown,
     Scene3D,
     GpsPanel,
     NodeTopicGraph,
@@ -327,6 +354,8 @@ export default {
 
     // 传统布局控制状态
     const sceneWidth = ref(74) // 默认以 3D 场景为主
+    const sceneShowGrid = ref(true)
+    const sceneShowAxes = ref(true)
     const isResizing = ref(false)
     const startX = ref(0)
     const startWidth = ref(0)
@@ -820,14 +849,36 @@ export default {
     }
     
     const toggleGrid = () => {
-      if (scene3dRef.value) {
-        scene3dRef.value.setGridVisible(!scene3dRef.value.showGrid)
+      sceneShowGrid.value = !sceneShowGrid.value
+      if (scene3dRef.value?.setGridVisible) {
+        scene3dRef.value.setGridVisible(sceneShowGrid.value)
       }
     }
     
     const toggleAxes = () => {
-      if (scene3dRef.value) {
-        scene3dRef.value.setAxesVisible(!scene3dRef.value.showAxes)
+      sceneShowAxes.value = !sceneShowAxes.value
+      if (scene3dRef.value?.setAxesVisible) {
+        scene3dRef.value.setAxesVisible(sceneShowAxes.value)
+      }
+    }
+
+    const setSceneViewPreset = (preset) => {
+      if (scene3dRef.value?.setViewPreset) {
+        scene3dRef.value.setViewPreset(preset)
+      }
+    }
+    
+    const setExpectedTargetTool = (tool) => {
+      if (tool === '3d_goal') {
+        ElMessage.info('3D期望功能稍后开放')
+        return
+      }
+
+      if (scene3dRef.value?.setNavigationTool) {
+        scene3dRef.value.setNavigationTool(tool)
+        ElMessage.info('左键按下选择目标点，移动鼠标设置方向，松开发送；按 X 取消')
+      } else {
+        ElMessage.warning('3D场景未就绪')
       }
     }
     
@@ -1040,6 +1091,10 @@ export default {
       resetView,
       toggleGrid,
       toggleAxes,
+      setSceneViewPreset,
+      setExpectedTargetTool,
+      sceneShowGrid,
+      sceneShowAxes,
 
       // 事件处理
       onTopicSubscribe,
@@ -1175,6 +1230,12 @@ export default {
 .scene-header h3 {
   font-size: 14px;
   font-weight: 500;
+}
+
+.scene-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .scene-content {
