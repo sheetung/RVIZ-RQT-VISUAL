@@ -240,7 +240,7 @@
             </el-button-group>
           </div>
           <div v-if="currentTool !== 'none'" class="tool-hint">
-            <small>{{ currentTool === '2d_goal' ? '拖拽设置目标方向 → 发布到 /goal_pose' : '拖拽设置朝向 → 发布到 /initialpose' }}</small>
+            <small>{{ currentTool === '2d_goal' ? `Goal -> ${expectedControlTopic}` : `Pose -> ${initialPoseTopic}` }}</small>
           </div>
         </div>
         
@@ -306,6 +306,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { Refresh, Aim, Folder, Grid, Coordinate, Location, Close } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useRosbridge } from '../../composables/useRosbridge'
+import { ROS_TOPICS } from '../../config/rosTopics'
 
 export default {
   name: 'Scene3DController',
@@ -332,8 +333,8 @@ export default {
     
     // 激光雷达设置
     const laserType = ref('3d')
-    const selectedLaser2D = ref('')
-    const selectedPointCloud = ref('/uav1/prometheus/local_points')
+    const selectedLaser2D = ref(ROS_TOPICS.laserScan)
+    const selectedPointCloud = ref(ROS_TOPICS.pointCloud)
     const showLaserPoints = ref(true)
     const showLaserLines = ref(true)
     const showIntensity = ref(false)
@@ -350,12 +351,14 @@ export default {
     const mapOpacity = ref(0.8)
     
     // 位置信息设置
-    const selectedOdomTopic = ref('/uav1/prometheus/odom_slam')
+    const selectedOdomTopic = ref(ROS_TOPICS.odom)
     const showTrajectory = ref(true)
     const trajectoryLength = ref(100)
 
     // 导航工具设置
     const currentTool = ref('none')
+    const expectedControlTopic = ROS_TOPICS.expectedControl
+    const initialPoseTopic = ROS_TOPICS.initialPose
     
     // 全局设置
     const showGrid = ref(true)
@@ -434,10 +437,10 @@ export default {
         })
 
         console.log('加载可用主题:', availableTopics.value)
-        // 自动选择 AMOV RViz 默认主题
-        selectedLaser2D.value = preferTopic(availableLaser2D.value, '/scan', selectedLaser2D.value)
-        selectedPointCloud.value = preferTopic(availablePointClouds.value, '/uav1/prometheus/local_points', selectedPointCloud.value)
-        selectedOdomTopic.value = preferTopic(availableOdomTopics.value, '/uav1/prometheus/odom_slam', selectedOdomTopic.value)
+        // 自动选择 RViz2 默认主题
+        selectedLaser2D.value = preferTopic(availableLaser2D.value, ROS_TOPICS.laserScan, selectedLaser2D.value)
+        selectedPointCloud.value = preferTopic(availablePointClouds.value, ROS_TOPICS.pointCloud, selectedPointCloud.value)
+        selectedOdomTopic.value = preferTopic(availableOdomTopics.value, ROS_TOPICS.odom, selectedOdomTopic.value)
         selectedMapTopic.value = preferTopic(availableMapTopics.value, '', selectedMapTopic.value)
 
         emit('laser-type-change', laserType.value)
@@ -687,6 +690,8 @@ export default {
       currentPose,
       currentVelocity,
       currentTool,
+      expectedControlTopic,
+      initialPoseTopic,
       
       // 全局设置
       showGrid,

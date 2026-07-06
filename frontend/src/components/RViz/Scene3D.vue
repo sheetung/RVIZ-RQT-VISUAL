@@ -31,6 +31,7 @@ import * as THREE from 'three'
 import { ElMessage } from 'element-plus'
 import { useRosbridge } from '../../composables/useRosbridge'
 import { useConnectionStore } from '../../composables/useConnectionStore'
+import { ROS_TOPICS, getDefaultVisualizationTopics, getPositionTopics } from '../../config/rosTopics'
 
 export default {
   name: 'Scene3D',
@@ -66,17 +67,8 @@ export default {
     const rosSubscriptions = new Map()
     const plugins = new Map()
 
-    const amovDefaultTopics = [
-      { topic: '/uav1/prometheus/local_points', type: 'sensor_msgs/msg/PointCloud2' },
-      { topic: '/uav1/prometheus/odom_slam', type: 'nav_msgs/msg/Odometry' },
-      { topic: '/visualization/goal', type: 'visualization_msgs/msg/MarkerArray' },
-      { topic: '/visualization/exp_sfc', type: 'visualization_msgs/msg/MarkerArray' },
-      { topic: '/fsm/path', type: 'nav_msgs/msg/Path' },
-      { topic: '/visualization/exp_traj', type: 'visualization_msgs/msg/MarkerArray' },
-      { topic: '/visualization/backup_traj', type: 'visualization_msgs/msg/MarkerArray' },
-      { topic: '/rog_map/inf_occ', type: 'sensor_msgs/msg/PointCloud2' }
-    ]
-    let amovDefaultsSubscribed = false
+    const defaultVisualizationTopics = getDefaultVisualizationTopics()
+    let defaultVisualizationSubscribed = false
 
     // 持久化设置存储
     const persistentSettings = {
@@ -134,8 +126,9 @@ export default {
         // 创建相机 - 设置为俯视XY平面的视角
         const aspect = containerRef.value.clientWidth / containerRef.value.clientHeight
         camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000)
-        // 默认相机位置，与RViz类似的斜视角
-        camera.position.set(10, -10, 10)  // 从右后上方看向原点
+        // Default angled map view: keep world X axis horizontal on screen.
+        camera.up.set(0, 0, 1)
+        camera.position.set(0, -14, 10)
         camera.lookAt(0, 0, 0)
         
         // 创建渲染器
@@ -413,15 +406,7 @@ export default {
     const subscribeToPositionTopics = () => {
       console.log('[Scene3D] 开始订阅位置主题以更新机器人模型...')
 
-      // 与位置信息面板完全相同的主题列表
-      const positionTopics = [
-        { topic: '/odom', type: 'nav_msgs/msg/Odometry' },
-        { topic: '/robot_pose', type: 'geometry_msgs/msg/PoseStamped' },
-        { topic: '/amcl_pose', type: 'geometry_msgs/msg/PoseWithCovarianceStamped' },
-        { topic: '/pose', type: 'geometry_msgs/msg/PoseStamped' },
-        { topic: '/localization', type: 'nav_msgs/msg/Odometry' },
-        { topic: '/localization_2d', type: 'nav_msgs/msg/Odometry' }
-      ]
+      const positionTopics = getPositionTopics()
 
       positionTopics.forEach(({ topic, type }) => {
         console.log(`[Scene3D] 尝试订阅位置主题: ${topic} (${type})`)
@@ -744,9 +729,11 @@ export default {
     // 公共方法
     const resetCamera = () => {
       if (camera && controls) {
-        // 重置为斜上方视角，与RViz类似
-        camera.position.set(10, -10, 10)
+        // Reset to angled map view while keeping world X horizontal.
+        camera.up.set(0, 0, 1)
+        camera.position.set(0, -14, 10)
         controls.target.set(0, 0, 0)
+        camera.lookAt(controls.target)
         controls.update()
       }
     }
@@ -928,16 +915,16 @@ export default {
       }
     }
 
-    const subscribeToAmovDefaultTopics = () => {
-      if (amovDefaultsSubscribed) {
+    const subscribeToDefaultVisualizationTopics = () => {
+      if (defaultVisualizationSubscribed) {
         return
       }
 
-      amovDefaultsSubscribed = true
-      amovDefaultTopics.forEach(({ topic, type }) => {
+      defaultVisualizationSubscribed = true
+      defaultVisualizationTopics.forEach(({ topic, type }) => {
         subscribeToRosTopic(topic, type)
       })
-      ElMessage.success('已加载 AMOV RViz 默认显示配置')
+      ElMessage.success('已加载 RViz2 默认显示配置')
     }
 
     // 取消所有订阅
@@ -2037,13 +2024,13 @@ export default {
 
       // 验证/goal_pose话题
       try {
-        const goalPoseVerification = rosbridge.subscribe('/goal_pose', 'geometry_msgs/msg/PoseStamped', (message) => {
+        const goalPoseVerification = rosbridge.subscribe(ROS_TOPICS.expectedControl, 'geometry_msgs/msg/PoseStamped', (message) => {
           console.log('[Verification] ✅ 收到/goal_pose消息:', message)
           ElMessage.success('验证成功：收到发布的目标点消息')
         })
 
         if (goalPoseVerification) {
-          verificationSubscriptions.set('/goal_pose', goalPoseVerification)
+          verificationSubscriptions.set(ROS_TOPICS.expectedControl, goalPoseVerification)
           console.log('[Verification] ✅ 成功订阅/goal_pose用于验证')
         }
       } catch (error) {
@@ -2052,13 +2039,13 @@ export default {
 
       // 验证/initialpose话题
       try {
-        const initialPoseVerification = rosbridge.subscribe('/initialpose', 'geometry_msgs/msg/PoseWithCovarianceStamped', (message) => {
+        const initialPoseVerification = rosbridge.subscribe(ROS_TOPICS.initialPose, 'geometry_msgs/msg/PoseWithCovarianceStamped', (message) => {
           console.log('[Verification] ✅ 收到/initialpose消息:', message)
           ElMessage.success('验证成功：收到发布的位置估计消息')
         })
 
         if (initialPoseVerification) {
-          verificationSubscriptions.set('/initialpose', initialPoseVerification)
+          verificationSubscriptions.set(ROS_TOPICS.initialPose, initialPoseVerification)
           console.log('[Verification] ✅ 成功订阅/initialpose用于验证')
         }
       } catch (error) {
@@ -2108,7 +2095,7 @@ export default {
       if (rosbridge.isConnected) {
         console.log('[Scene3D] ROS已连接，启动消息验证')
         startMessageVerification()
-        subscribeToAmovDefaultTopics()
+        subscribeToDefaultVisualizationTopics()
       } else {
         console.log('[Scene3D] ROS未连接，等待连接后启动验证')
         // 定期检查连接状态
@@ -2116,7 +2103,7 @@ export default {
           if (rosbridge.isConnected) {
             console.log('[Scene3D] ROS连接成功，启动消息验证')
             startMessageVerification()
-            subscribeToAmovDefaultTopics()
+            subscribeToDefaultVisualizationTopics()
             clearInterval(connectionCheckInterval)
           }
         }, 1000)
@@ -2340,7 +2327,7 @@ export default {
         // 发布到标准的goal_pose话题（RViz兼容）
         // console.log('[Navigation] 发布到话题: /goal_pose')
         // console.log('[Navigation] 消息类型: geometry_msgs/msg/PoseStamped')
-        const publishResult = rosbridge.publish('/goal_pose', 'geometry_msgs/msg/PoseStamped', goalMsg)
+        const publishResult = rosbridge.publish(ROS_TOPICS.expectedControl, 'geometry_msgs/msg/PoseStamped', goalMsg)
         // console.log('[Navigation] rosbridge.publish返回结果:', publishResult)
 
         if (publishResult) {
@@ -2419,7 +2406,7 @@ export default {
         // 发布到标准的initialpose话题（RViz兼容）
         // console.log('[Navigation] 发布到话题: /initialpose')
         // console.log('[Navigation] 消息类型: geometry_msgs/msg/PoseWithCovarianceStamped')
-        const publishResult = rosbridge.publish('/initialpose', 'geometry_msgs/msg/PoseWithCovarianceStamped', poseMsg)
+        const publishResult = rosbridge.publish(ROS_TOPICS.initialPose, 'geometry_msgs/msg/PoseWithCovarianceStamped', poseMsg)
         // console.log('[Navigation] rosbridge.publish返回结果:', publishResult)
 
         if (publishResult) {
@@ -2621,25 +2608,29 @@ export default {
       switch (preset) {
         case 'top':
           // 俯视图 - 从正上方看XY平面
+          camera.up.set(0, 1, 0)
           camera.position.set(0, 0, 20)
           camera.lookAt(target)
           break
 
         case 'side':
           // 侧视图 - 从Y轴侧面看XZ平面
+          camera.up.set(0, 0, 1)
           camera.position.set(0, -20, 5)
           camera.lookAt(target)
           break
 
         case 'front':
           // 前视图 - 从X轴前方看YZ平面
+          camera.up.set(0, 0, 1)
           camera.position.set(20, 0, 5)
           camera.lookAt(target)
           break
 
         case 'iso':
-          // 等距图 - 从斜上方看，与RViz类似的默认视角
-          camera.position.set(10, 10, 10)
+          // Angled map view with world X horizontal
+          camera.up.set(0, 0, 1)
+          camera.position.set(0, -14, 10)
           camera.lookAt(target)
           break
 
@@ -3439,7 +3430,7 @@ export default {
       configurePlugin,
       // ROS集成方法
       subscribeToRosTopic,
-      subscribeToAmovDefaultTopics,
+      subscribeToDefaultVisualizationTopics,
       unsubscribeFromRosTopic,
       updateVisualization,
       removeVisualization,

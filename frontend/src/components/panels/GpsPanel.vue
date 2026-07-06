@@ -32,6 +32,7 @@
 import { ref, computed, onUnmounted, watch } from 'vue'
 import { useRosbridge } from '../../composables/useRosbridge'
 import { useConnectionStore } from '../../composables/useConnectionStore'
+import { getPositionTopics } from '../../config/rosTopics'
 
 export default {
   name: 'PositionPanel',
@@ -77,11 +78,7 @@ export default {
 
     const subscriptions = []
 
-    const positionTopics = [
-      { topic: '/uav1/prometheus/odom_slam', type: 'nav_msgs/msg/Odometry' },
-      { topic: '/uav1/prometheus/pose_slam', type: 'geometry_msgs/msg/PoseStamped' },
-      { topic: '/odom', type: 'nav_msgs/msg/Odometry' }
-    ]
+    const positionTopics = getPositionTopics()
 
     const toNumber = (value, fallback = 0) => {
       const number = Number(value)

@@ -137,25 +137,25 @@
       <div class="quick-buttons">
         <el-button 
           size="small" 
-          @click="quickSubscribe('/scan', 'sensor_msgs/msg/LaserScan')"
+          @click="quickSubscribe(ROS_TOPICS.laserScan, 'sensor_msgs/msg/LaserScan')"
         >
           激光雷达
         </el-button>
         <el-button 
           size="small" 
-          @click="quickSubscribe('/cloud', 'sensor_msgs/msg/PointCloud2')"
+          @click="quickSubscribe(ROS_TOPICS.pointCloud, 'sensor_msgs/msg/PointCloud2')"
         >
           点云
         </el-button>
         <el-button 
           size="small" 
-          @click="quickSubscribe('/visualization_marker', 'visualization_msgs/msg/Marker')"
+          @click="quickSubscribe(ROS_TOPICS.goalMarker, 'visualization_msgs/msg/MarkerArray')"
         >
           标记
         </el-button>
         <el-button 
           size="small" 
-          @click="quickSubscribe('/path', 'nav_msgs/msg/Path')"
+          @click="quickSubscribe(ROS_TOPICS.path, 'nav_msgs/msg/Path')"
         >
           路径
         </el-button>
@@ -184,6 +184,7 @@
 import { ref, reactive, computed } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { useConnectionStore } from '../../composables/useConnectionStore'
+import { ROS_TOPICS } from '../../config/rosTopics'
 
 export default {
   name: 'TopicSubscription',
@@ -205,13 +206,13 @@ export default {
     
     // 可用主题列表（模拟数据）
     const availableTopics = ref([
-      { name: '/scan', message_type: 'sensor_msgs/msg/LaserScan' },
-      { name: '/cloud', message_type: 'sensor_msgs/msg/PointCloud2' },
+      { name: ROS_TOPICS.laserScan, message_type: 'sensor_msgs/msg/LaserScan' },
+      { name: ROS_TOPICS.pointCloud, message_type: 'sensor_msgs/msg/PointCloud2' },
       { name: '/camera/image_raw', message_type: 'sensor_msgs/msg/Image' },
-      { name: '/cmd_vel', message_type: 'geometry_msgs/msg/Twist' },
-      { name: '/odom', message_type: 'nav_msgs/msg/Odometry' },
-      { name: '/visualization_marker', message_type: 'visualization_msgs/msg/Marker' },
-      { name: '/path', message_type: 'nav_msgs/msg/Path' },
+      { name: ROS_TOPICS.cmdVel, message_type: 'geometry_msgs/msg/Twist' },
+      { name: ROS_TOPICS.odom, message_type: 'nav_msgs/msg/Odometry' },
+      { name: ROS_TOPICS.goalMarker, message_type: 'visualization_msgs/msg/MarkerArray' },
+      { name: ROS_TOPICS.path, message_type: 'nav_msgs/msg/Path' },
       { name: '/map', message_type: 'nav_msgs/msg/OccupancyGrid' }
     ])
     

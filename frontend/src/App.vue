@@ -5,7 +5,7 @@
       <div class="header-left">
         <div class="app-logo">
           <div class="logo-icon"></div>
-          <h1 class="app-title">AMOV 3D 可视化</h1>
+          <h1 class="app-title">RViz2 可视化</h1>
         </div>
       </div>
       <div class="header-right">
@@ -87,7 +87,6 @@ html, body {
 .app-header {
   height: 46px;
   background: #151b22;
-  backdrop-filter: none;
   border-bottom: 1px solid #28313a;
   display: flex;
   align-items: center;
@@ -110,22 +109,22 @@ html, body {
 }
 
 .logo-icon {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   background: linear-gradient(45deg, #00d4ff, #0099cc);
   border-radius: 6px;
   position: relative;
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.25);
 }
 
 .logo-icon::before {
   content: '';
   position: absolute;
-  top: 6px;
-  left: 6px;
-  right: 6px;
-  bottom: 6px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
   border-radius: 3px;
 }
 
@@ -134,21 +133,18 @@ html, body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 8px;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.8);
+  width: 7px;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.82);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   animation: pulse 2s infinite ease-in-out;
 }
 
 .app-title {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
-  background: linear-gradient(90deg, #ffffff, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #e5edf5;
 }
 
 .header-right {

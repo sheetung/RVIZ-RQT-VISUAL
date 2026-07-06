@@ -1,43 +1,5 @@
 <template>
   <div class="main-layout">
-    <!-- 顶部工具栏 -->
-    <div class="top-toolbar">
-      <div class="toolbar-left">
-        <el-text size="large" class="app-title">AMOV 3D 可视化</el-text>
-      </div>
-
-      <div class="toolbar-center">
-        <el-button-group size="small">
-          <el-button @click="toggleDragMode" :type="isDragMode ? 'primary' : 'default'">
-            <el-icon><Grid /></el-icon>
-            {{ isDragMode ? '退出拖拽' : '进入拖拽' }}
-          </el-button>
-          <el-button @click="autoArrange" v-if="isDragMode">
-            <el-icon><Refresh /></el-icon>
-            自动排列
-          </el-button>
-        </el-button-group>
-      </div>
-
-      <div class="toolbar-right">
-        <el-button-group size="small">
-          <el-button @click="resetView">
-            <el-icon><Aim /></el-icon>
-            重置视角
-          </el-button>
-          <el-button @click="toggleGrid">
-            <el-icon><Grid /></el-icon>
-            网格
-          </el-button>
-          <el-button @click="toggleAxes">
-            <el-icon><Coordinate /></el-icon>
-            坐标轴
-          </el-button>
-        </el-button-group>
-      </div>
-    </div>
-    
-    <!-- 主内容区 -->
     <div class="main-content" :class="{ 'drag-mode': isDragMode }">
       <!-- 传统布局模式 -->
       <template v-if="!isDragMode">
@@ -45,7 +7,7 @@
         <div class="scene-section" :style="{ width: `${sceneWidth}%` }">
           <div class="scene-panel">
             <div class="scene-header">
-              <h3>AMOV 点云视图</h3>
+              <h3>点云视图</h3>
               <div class="scene-controls">
                 <el-button-group size="small">
                   <el-button @click="resetView">重置视角</el-button>
@@ -364,7 +326,7 @@ export default {
     const isDragMode = ref(false)
 
     // 传统布局控制状态
-    const sceneWidth = ref(74) // AMOV 默认以 3D 场景为主
+    const sceneWidth = ref(74) // 默认以 3D 场景为主
     const isResizing = ref(false)
     const startX = ref(0)
     const startWidth = ref(0)
@@ -1102,47 +1064,16 @@ export default {
 
 <style scoped>
 .main-layout {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: transparent;
 }
 
-.top-toolbar {
-  height: 50px;
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.app-title {
-  font-weight: 600;
-  background: linear-gradient(90deg, #ffffff, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
 .main-content {
   flex: 1;
   display: flex;
-  min-height: calc(100vh - 50px);
+  min-height: 100%;
   height: auto;
 }
 
@@ -1481,13 +1412,6 @@ export default {
 }
 
 /* 工具栏中央按钮组 */
-.toolbar-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 /* 拖拽模式样式 */
 .main-content.drag-mode {
   position: relative;
@@ -1872,7 +1796,7 @@ export default {
 
 
 
-/* AMOV monitoring layout override */
+/* RViz2 monitoring layout override */
 
 .main-layout {
 
@@ -1882,33 +1806,7 @@ export default {
 
 
 
-.top-toolbar {
 
-  height: 44px;
-
-  background: #151b22;
-
-  border-bottom: 1px solid #28313a;
-
-  box-shadow: none;
-
-  padding: 0 14px;
-
-}
-
-
-
-.app-title {
-
-  background: none;
-
-  -webkit-text-fill-color: #e5edf5;
-
-  color: #e5edf5;
-
-  letter-spacing: 0;
-
-}
 
 
 
@@ -2159,14 +2057,6 @@ export default {
 }
 
 
-
-.toolbar-center {
-
-  justify-content: flex-start;
-
-  padding-left: 16px;
-
-}
 
 
 
